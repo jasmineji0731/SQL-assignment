@@ -1,0 +1,290 @@
+QUESTION 1
+
+SQL:
+SELECT SUM(quantityOnHand) AS containers_available
+FROM item
+WHERE itemDescription = 'bottle of antibiotics';
+
+OUTPUT:
+containers_available
+--------------------
+100
+
+This query finds the inventory row for the bottle of antibiotics and adds its quantityOnHand. The result represents the number of antibiotic bottles/containers currently available.
+
+
+QUESTION 2
+SQL:
+SELECT volunteerName
+FROM volunteer
+WHERE volunteerTelephone IS NOT NULL
+  AND volunteerTelephone NOT LIKE '2%'
+  AND volunteerName NOT LIKE '% Jones'
+ORDER BY volunteerName;
+
+OUTPUT:
+volunteerName
+-------------
+Gene Lewin
+
+
+This query selects volunteers with a recorded telephone number that does not begin with 2. It also excludes anyone whose name ends in Jones, and displays names instead of volunteer IDs.
+
+
+QUESTION 3
+
+SQL:
+SELECT DISTINCT v.volunteerName
+FROM volunteer AS v
+JOIN assignment AS a ON v.volunteerId = a.volunteerId
+JOIN task AS t ON a.taskCode = t.taskCode
+JOIN task_type AS tt ON t.taskTypeId = tt.taskTypeId
+WHERE tt.taskTypeName = 'transporting'
+ORDER BY v.volunteerName;
+
+OUTPUT:
+volunteerName
+-------------
+George Brewer
+
+This query connects volunteers to their assignments and the corresponding tasks, then keeps only tasks whose type is transporting. DISTINCT prevents a volunteer from appearing more than once.
+
+QUESTION 4
+SQL:
+SELECT t.taskDescription
+FROM task AS t
+LEFT JOIN assignment AS a ON t.taskCode = a.taskCode
+WHERE a.taskCode IS NULL
+ORDER BY t.taskDescription;
+
+OUTPUT:
+taskDescription
+---------------
+Prepare 100 food packages
+Take packages to the warehouse
+
+This query starts with every task and uses a LEFT JOIN to look for a matching assignment. Tasks with no matching assignment have a NULL assignment taskCode, so only unassigned task descriptions are returned.
+
+QUESTION 5
+
+SQL:
+SELECT DISTINCT pt.packageTypeName
+FROM package_type AS pt
+JOIN package AS p ON pt.packageTypeId = p.packageTypeId
+JOIN package_contents AS pc ON p.packageId = pc.packageId
+JOIN item AS i ON pc.itemId = i.itemId
+WHERE LOWER(i.itemDescription) LIKE '%bottle%'
+ORDER BY pt.packageTypeName;
+
+OUTPUT:
+packageTypeName
+---------------
+food and water
+
+This query follows each package to its contents and then to the item descriptions. It keeps items whose descriptions contain the word “bottle” and returns the distinct package types that contain them.
+
+
+QUESTION 6
+
+SQL:
+SELECT i.itemDescription
+FROM item AS i
+LEFT JOIN package_contents AS pc ON i.itemId = pc.itemId
+WHERE pc.itemId IS NULL
+ORDER BY i.itemDescription;
+
+OUTPUT:
+itemDescription
+---------------
+bottle of antibiotics
+bottle of aspirin
+flashlight
+pack of bandages
+
+This query checks each item for a matching row in package_contents. Items without a matching package_contents row are not included in any package, so their descriptions are displayed.
+
+
+QUESTION 7
+
+SQL:
+SELECT DISTINCT t.taskDescription
+FROM task AS t
+JOIN assignment AS a ON t.taskCode = a.taskCode
+JOIN volunteer AS v ON a.volunteerId = v.volunteerId
+WHERE v.volunteerAddress LIKE '% NJ%'
+ORDER BY t.taskDescription;
+
+OUTPUT:
+taskDescription
+---------------
+Prepare 100 water packages
+Prepare 20 children's packages
+Prepare 5,000 packages
+
+
+This query joins tasks to their assignments and volunteers, then filters volunteer addresses that indicate New Jersey (NJ). DISTINCT returns each qualifying task description only once.
+
+
+QUESTION 8
+
+SQL:
+SELECT DISTINCT v.volunteerName
+FROM volunteer AS v
+JOIN assignment AS a ON v.volunteerId = a.volunteerId
+WHERE a.startDateTime >= '2021-01-01'
+  AND a.startDateTime < '2021-07-01'
+ORDER BY v.volunteerName;
+
+OUTPUT:
+volunteerName
+-------------
+Chris Jordan
+Joan Simmons
+
+This query finds assignments whose start date is from January 1, 2021 up to, but not including, July 1, 2021. It returns the names of the volunteers on those assignments without repeating names.
+
+
+QUESTION 9
+
+SQL:
+SELECT DISTINCT v.volunteerName
+FROM volunteer AS v
+JOIN assignment AS a ON v.volunteerId = a.volunteerId
+JOIN package AS p ON a.taskCode = p.taskCode
+JOIN package_contents AS pc ON p.packageId = pc.packageId
+JOIN item AS i ON pc.itemId = i.itemId
+WHERE LOWER(i.itemDescription) LIKE '%spam%'
+ORDER BY v.volunteerName;
+
+OUTPUT:
+volunteerName
+-------------
+Gerry Banks
+Julie White
+
+This query traces volunteers through assignments to packages and package contents, then checks whether a contained item's description includes spam. It returns each matching volunteer once.
+
+QUESTION 10
+SQL:
+SELECT i.itemDescription
+FROM item AS i
+JOIN package_contents AS pc ON i.itemId = pc.itemId
+GROUP BY i.itemId, i.itemDescription, pc.packageId
+HAVING SUM(i.itemValue * pc.itemQuantity) = 100
+ORDER BY i.itemDescription;
+
+OUTPUT:
+itemDescription
+---------------
+Baby formula
+
+
+This query groups package-content records by item and package, calculates the item's total value in that package by multiplying itemValue by itemQuantity, and keeps the item when that value is exactly 100.
+
+
+QUESTION 11
+
+SQL:
+SELECT ts.taskStatusName AS taskStatus,
+       COUNT(DISTINCT a.volunteerId) AS volunteerCount
+FROM task_status AS ts
+JOIN task AS t ON ts.taskStatusId = t.taskStatusId
+JOIN assignment AS a ON t.taskCode = a.taskCode
+GROUP BY ts.taskStatusId, ts.taskStatusName
+ORDER BY volunteerCount DESC, taskStatus ASC;
+
+OUTPUT:
+taskStatus | volunteerCount
+---------------------------
+open | 4
+closed | 3
+ongoing | 2
+pending | 1
+
+
+This query connects each task status to its tasks and assignments. It counts distinct volunteers assigned to tasks in each status, then sorts the statuses from the largest volunteer count to the smallest.
+
+
+QUESTION 12
+
+SQL:
+SELECT t.taskCode, SUM(p.packageWeight) AS totalPackageWeight
+FROM task AS t
+JOIN package AS p ON t.taskCode = p.taskCode
+GROUP BY t.taskCode
+ORDER BY totalPackageWeight DESC
+LIMIT 1;
+
+OUTPUT:
+taskCode | totalPackageWeight
+-----------------------------
+106 | 308.0
+
+
+This query adds the weights of all packages belonging to each task. It sorts tasks by their combined package weight from greatest to least and returns the heaviest task. It uses GROUP BY and ORDER BY without a subquery.
+
+
+QUESTION 13
+
+SQL:
+SELECT COUNT(*) AS non_packing_task_count
+FROM task AS t
+JOIN task_type AS tt ON t.taskTypeId = tt.taskTypeId
+WHERE tt.taskTypeName <> 'packing';
+
+OUTPUT:
+non_packing_task_count
+----------------------
+3
+
+This query connects tasks to their task types and counts the tasks whose type name is anything other than packing.
+
+
+QUESTION 14
+
+SQL:
+SELECT i.itemDescription
+FROM item AS i
+JOIN package_contents AS pc ON i.itemId = pc.itemId
+JOIN package AS p ON pc.packageId = p.packageId
+JOIN assignment AS a ON p.taskCode = a.taskCode
+GROUP BY i.itemId, i.itemDescription
+HAVING COUNT(DISTINCT a.volunteerId) < 3
+ORDER BY i.itemDescription;
+
+OUTPUT:
+itemDescription
+---------------
+can of spam
+dried fruit
+men's coat
+sleeping bag
+tent
+women's coat
+
+This query traces each packed item through its package to the task and its assignments. It counts the distinct volunteers assigned to tasks involving each item, and returns items associated with fewer than three volunteers.
+
+
+QUESTION 15
+
+SQL:
+SELECT p.packageId,
+       SUM(i.itemValue * pc.itemQuantity) AS packageValue
+FROM package AS p
+JOIN package_contents AS pc ON p.packageId = pc.packageId
+JOIN item AS i ON pc.itemId = i.itemId
+GROUP BY p.packageId
+HAVING SUM(i.itemValue * pc.itemQuantity) > 100
+ORDER BY packageValue ASC, p.packageId ASC;
+
+OUTPUT:
+packageId | packageValue
+------------------------
+6 | 150.0
+2 | 151.0
+4 | 350.0
+10 | 750.0
+5 | 1420.0
+
+This query calculates each package's total contents value by multiplying each item's value by the quantity in that package and adding those amounts. It keeps packages worth more than 100 and sorts them from lowest value to highest.
+
